@@ -1,0 +1,76 @@
+# Default configuration. Secrets stay in .env — never here.
+# Risk numbers in this file are DISPLAY / documentation only.
+# Runtime RiskGuard reads hardcoded constants in trade_agent.risk.limits
+# and cannot be weakened by editing this file.
+
+app:
+  name: trade-agent
+  timezone: UTC
+  data_dir: var
+  db_filename: trade_agent.db
+  log_level: INFO
+  random_seed: 42
+
+universe:
+  crypto:
+    - BTC/USDT
+    - ETH/USDT
+  forex: []
+  timeframes:
+    - 1h
+    - 4h
+    - 1d
+
+llm:
+  monthly_budget_usd: 25.0
+  # Per-task routing. Heavy reasoning vs cheap bulk vs locked-down web extract.
+  tasks:
+    reasoning:
+      provider: ollama
+      model: llama3.1
+    bulk:
+      provider: ollama
+      model: llama3.1
+    web_extract:
+      provider: ollama
+      model: llama3.1
+      allow_tools: false
+      json_only: true
+  # USD per 1M tokens for budget accounting. Local Ollama is $0.
+  prices:
+    ollama/llama3.1:
+      input: 0.0
+      output: 0.0
+    anthropic/claude-sonnet-4-5:
+      input: 3.0
+      output: 15.0
+
+cache:
+  default_ttl_seconds: 3600
+
+providers:
+  binance:
+    enabled: true
+    needs_key: false
+    rate_limit_per_key: 1200
+    rate_limit_window_seconds: 60
+  finnhub:
+    enabled: false
+    needs_key: true
+    env_var: FINNHUB_KEYS
+    signup_url: https://finnhub.io/register
+    needed_in_phase: 6
+    rate_limit_per_key: 60
+    rate_limit_window_seconds: 60
+
+# INFORMATIONAL ONLY. Changing these does not change the live guard.
+risk_display:
+  max_risk_per_trade: 0.005
+  max_daily_loss: 0.02
+  max_drawdown: 0.10
+  max_open_positions: 3
+  news_blackout_minutes: 30
+
+# Live money path is compile-time disabled until Phase 9 + explicit approval.
+live_trading:
+  enabled: false

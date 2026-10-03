@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.local
+config/local.yaml
+
+# Runtime data / caches
+var/
+data/local/
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
