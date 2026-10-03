@@ -142,4 +142,5 @@ def _missing_ranges(
     nxt = last + delta
     if nxt < end:
         ranges.append((nxt, end))
-    return [(a, b) for a, b in ranges if a < b]
+    min_width = timeframe_delta(timeframe)
+    return [(a, b) for a, b in ranges if b - a >= min_width]

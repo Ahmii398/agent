@@ -72,6 +72,24 @@ def test_repair_fetches_only_the_hole(settings, store) -> None:
     assert provider.calls[0][0] == start + timedelta(hours=3)
 
 
+def test_sub_bar_edges_are_not_fetched(settings, store) -> None:
+    """A request that starts mid-bar must not issue a REST call for that stub."""
+    start = datetime(2024, 1, 1, 0, 30, tzinfo=UTC)  # 30m into the 00:00 bar
+    aligned = datetime(2024, 1, 1, 1, 0, tzinfo=UTC)
+    bars = [_bar(aligned + timedelta(hours=i), 1) for i in range(3)]
+    provider = ScriptedProvider(bars)
+    dl = HistoricalDownloader(provider, CandleStore(settings.data_dir), store)
+    # Prime the store with the three complete hours.
+    candles = CandleStore(settings.data_dir)
+    from trade_agent.data.candles import bars_to_frame
+
+    candles.save("binance", "BTC/USDT", "1h", bars_to_frame(bars))
+    provider.calls.clear()
+    out = dl.download("BTC/USDT", "1h", start, aligned + timedelta(hours=3))
+    assert len(out) == 3
+    assert provider.calls == []
+
+
 def test_coverage_row_written(settings, store) -> None:
     start = datetime(2024, 1, 1, tzinfo=UTC)
     bars = [_bar(start + timedelta(hours=i), 1) for i in range(3)]
