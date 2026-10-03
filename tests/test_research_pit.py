@@ -100,6 +100,24 @@ def test_upcoming_high_impact_window(store) -> None:
     assert names == {"NFP"}
 
 
+def test_rss_parser_strips_utf8_bom() -> None:
+    from trade_agent.research.sources_public import _parse_rss
+
+    xml = (
+        "ï»¿<?xml version='1.0'?><rss><channel><item>"
+        "<title>Fed statement</title><link>https://example.test/fed</link>"
+        "<description>The Federal Reserve left rates unchanged.</description>"
+        "<pubDate>Thu, 02 Oct 2026 12:00:00 GMT</pubDate>"
+        "</item></channel></rss>"
+    )
+    items = _parse_rss(
+        xml, source="rss_fed", url="https://example.test/fed", reliability=0.85, assets=["USD"]
+    )
+    assert len(items) == 1
+    assert items[0].title == "Fed statement"
+    assert items[0].published_at is not None
+
+
 def test_collector_refuses_when_live_enabled(store, settings, monkeypatch) -> None:
     monkeypatch.setattr("trade_agent.research.collector.LIVE_TRADING_ENABLED", True)
     with pytest.raises(RuntimeError, match="live trading"):
