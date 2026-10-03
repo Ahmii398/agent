@@ -46,6 +46,12 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--max", type=int, default=1)
     st.add_argument("--poll", type=float, default=2.0)
 
+    feat = sub.add_parser("features", help="Compute features on stored candles")
+    feat.add_argument("--symbol", default="BTC/USDT")
+    feat.add_argument("--timeframe", default="1h")
+    feat.add_argument("--htf", default="1d")
+    feat.add_argument("--sample", type=int, default=5)
+
     vd = sub.add_parser("verify-data", help="Phase 2: real Binance download + quality")
     vd.add_argument("--symbol", action="append", default=None)
     vd.add_argument("--timeframe", default="1h")
@@ -78,6 +84,10 @@ def main(argv: list[str] | None = None) -> int:
         from trade_agent.data.cli import cmd_verify_data
 
         return cmd_verify_data(settings, args)
+    if args.cmd == "features":
+        from trade_agent.features.cli import cmd_features
+
+        return cmd_features(settings, args)
     return 1
 
 
