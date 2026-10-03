@@ -17,22 +17,28 @@ log = get_logger("data.ccxt")
 # Public spot. Do not send keys; we are not trading through this client.
 _DEFAULT_EXCHANGE = "binance"
 
+# api.binance.com returns HTTP 451 from some regions (including this cloud
+# host). data-api.binance.vision is Binance's public market-data hostname and
+# serves the same spot klines. This is not a silent venue switch.
+BINANCE_PUBLIC_REST = "https://data-api.binance.vision/api/v3"
+
 
 class CcxtOHLCVProvider(DataProvider):
     """Historical OHLCV via ccxt REST. Streaming is implemented by polling."""
 
     def __init__(
-        self, exchange_id: str = _DEFAULT_EXCHANGE, exchange: object | None = None
+        self,
+        exchange_id: str = _DEFAULT_EXCHANGE,
+        exchange: object | None = None,
+        *,
+        public_rest_url: str | None = None,
     ) -> None:
         self.exchange_id = exchange_id
         self.name = exchange_id
         if exchange is not None:
             self._exchange = exchange
         else:
-            import ccxt
-
-            cls = getattr(ccxt, exchange_id)
-            self._exchange = cls({"enableRateLimit": True, "options": {"defaultType": "spot"}})
+            self._exchange = _build_exchange(exchange_id, public_rest_url)
 
     def fetch_ohlcv(
         self,
@@ -107,6 +113,30 @@ def _rows_to_bars(rows: list[list[float]], *, start: datetime, end: datetime) ->
         )
     bars.sort(key=lambda b: b.ts)
     return bars
+
+
+def _build_exchange(exchange_id: str, public_rest_url: str | None):
+    import ccxt
+
+    options = {"enableRateLimit": True, "options": {"defaultType": "spot"}}
+    if exchange_id == "binance":
+        options["options"] = {
+            "defaultType": "spot",
+            # Official api.binance.com also loads futures exchangeInfo (451 here).
+            "fetchMarkets": {"types": ["spot"]},
+            "fetchMargins": False,
+        }
+    cls = getattr(ccxt, exchange_id)
+    exchange = cls(options)
+    if exchange_id == "binance":
+        url = public_rest_url or BINANCE_PUBLIC_REST
+        exchange.urls["api"]["public"] = url
+        log.warning(
+            "provider=binance using public_rest=%s "
+            "(api.binance.com is geo-blocked with HTTP 451 from this host)",
+            url,
+        )
+    return exchange
 
 
 def closed_as_of(bar: OHLCVBar, timeframe: str, as_of: datetime) -> bool:

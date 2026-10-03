@@ -26,8 +26,11 @@ uv run ruff check src tests
 ```
 
 Phase 1 and Phase 2 use **no API keys**. Phase 2 pulls Binance public spot
-candles via ccxt. If a later phase needs a key the agent stops and names the
-exact `.env` variable.
+candles via ccxt. **Real-data note:** `api.binance.com` returns HTTP 451
+(geo-restricted) from some hosts; the provider uses
+`https://data-api.binance.vision/api/v3` (same Binance klines) and logs that
+choice. If a later phase needs a key the agent stops and names the exact
+`.env` variable.
 
 ## Layout
 
