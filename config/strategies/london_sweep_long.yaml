@@ -1,0 +1,19 @@
+name: london_sweep_long
+version: 1
+timeframe: 1h
+side: long
+notes: "London session sweep of a swing low while HTF bias is up."
+entry:
+  all:
+    - {feature: session_london, op: eq, value: true}
+    - {feature: sweep_low, op: eq, value: true}
+    - {feature: structure_bias, op: eq, value: 1}
+    - {feature: htf_aligned, op: eq, value: true}
+stop:
+  type: structure
+  field: last_swing_low
+target:
+  type: r_multiple
+  r: 2.0
+time_stop_bars: 24
+min_rr: 1.5

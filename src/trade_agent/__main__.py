@@ -46,6 +46,14 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--max", type=int, default=1)
     st.add_argument("--poll", type=float, default=2.0)
 
+    bt = sub.add_parser("backtest", help="Run a YAML strategy spec on stored candles")
+    bt.add_argument("--spec", default="config/strategies/london_sweep_long.yaml")
+    bt.add_argument("--symbol", default="BTC/USDT")
+    bt.add_argument("--htf", default="1d")
+    bt.add_argument("--equity", type=float, default=10_000.0)
+    bt.add_argument("--risk", type=float, default=0.005)
+    bt.add_argument("--sample", type=int, default=5)
+
     feat = sub.add_parser("features", help="Compute features on stored candles")
     feat.add_argument("--symbol", default="BTC/USDT")
     feat.add_argument("--timeframe", default="1h")
@@ -88,6 +96,10 @@ def main(argv: list[str] | None = None) -> int:
         from trade_agent.features.cli import cmd_features
 
         return cmd_features(settings, args)
+    if args.cmd == "backtest":
+        from trade_agent.backtest.cli import cmd_backtest
+
+        return cmd_backtest(settings, args)
     return 1
 
 
