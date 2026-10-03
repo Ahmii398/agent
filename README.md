@@ -21,6 +21,8 @@ uv run python -m trade_agent status
 uv run python -m trade_agent verify
 uv run python -m trade_agent verify-data --days 60 --timeframe 1h
 uv run python -m trade_agent inspect --symbol BTC/USDT --timeframe 1h
+uv run python -m trade_agent research --asset BTC --asset ETH
+uv run python -m trade_agent research-inspect
 uv run pytest
 uv run ruff check src tests
 ```
@@ -29,8 +31,18 @@ Phase 1 and Phase 2 use **no API keys**. Phase 2 pulls Binance public spot
 candles via ccxt. **Real-data note:** `api.binance.com` returns HTTP 451
 (geo-restricted) from some hosts; the provider uses
 `https://data-api.binance.vision/api/v3` (same Binance klines) and logs that
-choice. If a later phase needs a key the agent stops and names the exact
-`.env` variable.
+choice.
+
+Phase 6 collects structured research (FRED, Finnhub, NewsAPI, Twelve Data,
+GoldAPI, Fear & Greed, CoinGecko, CFTC, Bitget public, RSS) plus a tiny
+robots-respecting Wikipedia allowlist. Keys live in `.env` only; logs use
+`key_index`. Point-in-time queries require `published_at < as_of` and drop
+unknown publish times. Fetched text cannot change risk limits or place orders.
+Bitget public market data does not send the API key; authenticated Bitget
+trading needs `BITGET_API_SECRET` and `BITGET_PASSPHRASE` (not configured).
+
+If a later phase needs a key the agent stops and names the exact `.env`
+variable.
 
 ## Layout
 

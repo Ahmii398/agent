@@ -55,12 +55,59 @@ providers:
     rate_limit_per_key: 1200
     rate_limit_window_seconds: 60
   finnhub:
-    enabled: false
+    enabled: true
     needs_key: true
     env_var: FINNHUB_KEYS
     signup_url: https://finnhub.io/register
     needed_in_phase: 6
     rate_limit_per_key: 60
+    rate_limit_window_seconds: 60
+  newsapi:
+    enabled: true
+    needs_key: true
+    env_var: NEWSAPI_KEYS
+    signup_url: https://newsapi.org/register
+    needed_in_phase: 6
+    rate_limit_per_key: 5
+    rate_limit_window_seconds: 60
+  fred:
+    enabled: true
+    needs_key: true
+    env_var: FRED_API_KEY
+    signup_url: https://fred.stlouisfed.org/docs/api/api_key.html
+    needed_in_phase: 6
+    rate_limit_per_key: 30
+    rate_limit_window_seconds: 60
+  twelve_data:
+    enabled: true
+    needs_key: true
+    env_var: TWELVE_DATA_KEYS
+    signup_url: https://twelvedata.com
+    needed_in_phase: 6
+    rate_limit_per_key: 8
+    rate_limit_window_seconds: 60
+  alpha_vantage:
+    enabled: true
+    needs_key: true
+    env_var: ALPHA_VANTAGE_KEYS
+    signup_url: https://www.alphavantage.co/support/#api-key
+    needed_in_phase: 6
+    rate_limit_per_key: 5
+    rate_limit_window_seconds: 60
+  goldapi:
+    enabled: true
+    needs_key: true
+    env_var: GOLD_API_KEY
+    signup_url: https://www.goldapi.io
+    needed_in_phase: 6
+    rate_limit_per_key: 10
+    rate_limit_window_seconds: 60
+  bitget:
+    enabled: true
+    needs_key: false
+    env_var: BITGET_API_KEY
+    needed_in_phase: 6
+    rate_limit_per_key: 20
     rate_limit_window_seconds: 60
 
 # INFORMATIONAL ONLY. Changing these does not change the live guard.

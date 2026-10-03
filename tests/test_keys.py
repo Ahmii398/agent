@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 
 import pytest
 
 from trade_agent.core.errors import AllKeysCoolingDown, MissingAPIKey
-from trade_agent.core.keys import KeyPool
+from trade_agent.core.keys import KeyPool, keys_from_env
 
 
 def test_round_robin_and_429_skips_hot_key(store, caplog) -> None:
@@ -82,6 +83,25 @@ def test_secrets_never_written_to_sqlite(store) -> None:
     rows = store.fetchall("SELECT * FROM key_rate_limits")
     dumped = " ".join(str(tuple(r)) for r in rows)
     assert "super-secret-key-xyz" not in dumped
+
+
+def test_keys_from_env_merges_comma_and_numbered_aliases(monkeypatch) -> None:
+    for name in list(os.environ):
+        if "FINNHUB" in name:
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("FINNHUB_KEYS", "aaa,bbb")
+    monkeypatch.setenv("FINNHUB_KEYS_1", "ccc")
+    monkeypatch.setenv("FINNHUB_API_KEY_2", "ddd")
+    assert keys_from_env("FINNHUB_KEYS") == ["aaa", "bbb", "ccc", "ddd"]
+
+
+def test_keys_from_env_twelve_data_numbered(monkeypatch) -> None:
+    for name in list(os.environ):
+        if "TWELVE_DATA" in name:
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("TWELVE_DATA_API_KEY_1", "t1")
+    monkeypatch.setenv("TWELVE_DATA_API_KEY_2", "t2")
+    assert keys_from_env("TWELVE_DATA_KEYS") == ["t1", "t2"]
 
 
 def test_quota_window_skips_exhausted_key(store) -> None:

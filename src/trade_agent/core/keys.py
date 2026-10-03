@@ -76,7 +76,7 @@ class KeyPool:
         self.needed_in_phase = needed_in_phase
         self.base_cooldown_seconds = base_cooldown_seconds
         self.max_cooldown_seconds = max_cooldown_seconds
-        self._keys = keys if keys is not None else _parse_pool(os.environ.get(env_var, ""))
+        self._keys = keys if keys is not None else keys_from_env(env_var)
         self._lock = threading.Lock()
         self._rr = 0
         self._state: dict[int, _KeyState] = {i: _KeyState() for i in range(len(self._keys))}
@@ -246,6 +246,44 @@ class KeyPool:
                 state.last_used_at,
             ),
         )
+
+
+_ALIASES: dict[str, tuple[str, ...]] = {
+    "FINNHUB_KEYS": ("FINNHUB_API_KEY", "FINNHUB_KEY"),
+    "NEWSAPI_KEYS": ("NEWSAPI_KEY", "NEWS_API_KEY"),
+    "TWELVE_DATA_KEYS": ("TWELVE_DATA_API_KEY", "TWELVE_DATA_KEY"),
+    "ALPHA_VANTAGE_KEYS": ("ALPHA_VANTAGE_KEY", "ALPHA_VANTAGE_API_KEY"),
+    "FRED_API_KEY": ("FRED_KEY",),
+    "GOLD_API_KEY": ("GOLDAPI_KEY", "GOLD_API_KEYS"),
+}
+
+
+def keys_from_env(env_var: str) -> list[str]:
+    """Load a key pool from ``env_var``, comma lists, and numbered aliases.
+
+    Example: ``FINNHUB_KEYS=a,b`` plus ``FINNHUB_KEYS_1=c`` yields ``[a, b, c]``.
+    Also accepts ``TWELVE_DATA_API_KEY_1`` when the pool name is ``TWELVE_DATA_KEYS``.
+    """
+    found: list[str] = []
+    for name in _env_aliases(env_var):
+        raw = os.environ.get(name, "")
+        for part in _parse_pool(raw):
+            if part not in found:
+                found.append(part)
+    return found
+
+
+def _env_aliases(env_var: str) -> list[str]:
+    names = [env_var, *(_ALIASES.get(env_var, ()))]
+    numbered: list[str] = []
+    for name in names:
+        for i in range(1, 16):
+            numbered.append(f"{name}_{i}")
+    out: list[str] = []
+    for n in [*names, *numbered]:
+        if n not in out:
+            out.append(n)
+    return out
 
 
 def _parse_pool(raw: str) -> list[str]:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from trade_agent.approval.flags import LIVE_TRADING_ENABLED
 from trade_agent.core.logging import configure_logging
 from trade_agent.core.security import (
     UNTRUSTED_END,
@@ -10,6 +11,8 @@ from trade_agent.core.security import (
     assert_json_schema,
     wrap_untrusted,
 )
+from trade_agent.research.extract import extract_untrusted
+from trade_agent.risk.limits import HARD_LIMITS
 
 MALICIOUS_PAGE = """
 <html><body>
@@ -41,6 +44,50 @@ def test_json_schema_enforced() -> None:
     assert ok["summary"] == "x"
     with pytest.raises(ValueError):
         assert_json_schema({"summary": "x"}, WEB_EXTRACT_REQUIRED_KEYS)
+
+
+def test_extract_untrusted_cannot_flip_live_or_risk() -> None:
+    before_limits = dict(HARD_LIMITS)
+    parsed = extract_untrusted(MALICIOUS_PAGE, source="web", url="https://evil.example/p")
+    assert set(parsed) == set(WEB_EXTRACT_REQUIRED_KEYS)
+    assert LIVE_TRADING_ENABLED is False
+    assert dict(HARD_LIMITS) == before_limits
+    summary = parsed["summary"].lower()
+    assert "live_trading" not in summary
+    assert "api_key=" not in summary
+    assert "place the order" not in summary
+    assert "ignore previous" not in summary
+
+
+def test_malicious_page_cannot_submit_orders() -> None:
+    from trade_agent.core.errors import LiveTradingDisabled
+    from trade_agent.interfaces.broker import Broker, Order, Side
+
+    extract_untrusted(MALICIOUS_PAGE, source="web", url="https://evil.example/p")
+
+    class RecordingBroker(Broker):
+        name = "inject-test"
+        is_paper = False
+        submitted: list[Order] = []
+
+        def submit(self, order: Order):
+            self.assert_live_allowed()
+            self.submitted.append(order)
+
+        def cancel(self, order_id: str) -> None:
+            return None
+
+        def positions(self):
+            return []
+
+        def equity(self) -> float:
+            return 0.0
+
+    broker = RecordingBroker()
+    with pytest.raises(LiveTradingDisabled):
+        broker.submit(Order(symbol="BTC/USDT", side=Side.BUY, qty=1))
+    assert broker.submitted == []
+    assert LIVE_TRADING_ENABLED is False
 
 
 def test_logger_redacts_key_shaped_text(capsys) -> None:

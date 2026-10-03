@@ -70,6 +70,14 @@ def main(argv: list[str] | None = None) -> int:
     vd.add_argument("--timeframe", default="1h")
     vd.add_argument("--days", type=int, default=60)
 
+    rs = sub.add_parser("research", help="Collect structured + allowlisted web research")
+    rs.add_argument("--asset", action="append", default=None)
+    rs.add_argument("--as-of", dest="as_of", default=None)
+    rs.add_argument("--sample", type=int, default=8)
+
+    ri = sub.add_parser("research-inspect", help="Point-in-time research row counts")
+    ri.add_argument("--as-of", dest="as_of", default=None)
+
     args = parser.parse_args(argv)
 
     settings = load_settings(args.config)
@@ -111,6 +119,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.symbol is None:
             args.symbol = ["BTC/USDT", "ETH/USDT"]
         return cmd_validate(settings, args)
+    if args.cmd == "research":
+        from trade_agent.research.cli import cmd_research
+
+        return cmd_research(settings, args)
+    if args.cmd == "research-inspect":
+        from trade_agent.research.cli import cmd_research_inspect
+
+        return cmd_research_inspect(settings, args)
     return 1
 
 

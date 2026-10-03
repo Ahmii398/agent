@@ -66,7 +66,9 @@ CREATE TABLE IF NOT EXISTS research_items (
     dedupe_key TEXT,
     is_high_impact_event INTEGER NOT NULL DEFAULT 0,
     published_at_unknown INTEGER NOT NULL DEFAULT 0,
-    raw_path TEXT
+    raw_path TEXT,
+    kind TEXT NOT NULL DEFAULT 'news',
+    extra_json TEXT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_research_dedupe
@@ -86,6 +88,8 @@ CREATE TABLE IF NOT EXISTS economic_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_scheduled ON economic_events(scheduled_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedupe
+    ON economic_events(source, name, scheduled_at);
 
 CREATE TABLE IF NOT EXISTS briefings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

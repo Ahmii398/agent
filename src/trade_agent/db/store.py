@@ -9,7 +9,7 @@ from typing import Any
 
 from trade_agent.core.timeutil import utcnow_iso
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
 
@@ -25,17 +25,31 @@ class Store:
         self._conn.execute("PRAGMA journal_mode = WAL")
 
     def migrate(self) -> int:
-        """Apply ``schema.sql`` if needed. Returns the current schema version."""
+        """Apply ``schema.sql`` plus incremental column upgrades."""
         current = self._current_version()
-        if current >= SCHEMA_VERSION:
-            return current
-        sql = SCHEMA_PATH.read_text(encoding="utf-8")
-        self._conn.executescript(sql)
-        self.execute(
-            "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
-            (SCHEMA_VERSION, utcnow_iso()),
-        )
+        if current == 0:
+            sql = SCHEMA_PATH.read_text(encoding="utf-8")
+            self._conn.executescript(sql)
+        self._apply_v3()
+        if current < SCHEMA_VERSION:
+            self.execute(
+                "INSERT OR REPLACE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+                (SCHEMA_VERSION, utcnow_iso()),
+            )
         return SCHEMA_VERSION
+
+    def _apply_v3(self) -> None:
+        cols = {row[1] for row in self._conn.execute("PRAGMA table_info(research_items)")}
+        if not cols:
+            return
+        if "kind" not in cols:
+            self.execute("ALTER TABLE research_items ADD COLUMN kind TEXT NOT NULL DEFAULT 'news'")
+        if "extra_json" not in cols:
+            self.execute("ALTER TABLE research_items ADD COLUMN extra_json TEXT")
+        self.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedupe "
+            "ON economic_events(source, name, scheduled_at)"
+        )
 
     def _current_version(self) -> int:
         row = self._conn.execute(
