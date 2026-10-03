@@ -97,13 +97,17 @@ def collect_finnhub(
                     kind="news",
                 )
             )
-    cal = http.get_json(
-        "https://finnhub.io/api/v1/calendar/economic",
-        provider="finnhub",
-        pool=pool,
-        inject="param:token",
-        ttl=1800,
-    )
+    try:
+        cal = http.get_json(
+            "https://finnhub.io/api/v1/calendar/economic",
+            provider="finnhub",
+            pool=pool,
+            inject="param:token",
+            ttl=1800,
+        )
+    except Exception as exc:
+        log.warning("finnhub calendar skip err=%s", type(exc).__name__)
+        cal = {}
     if isinstance(cal, dict):
         cal_rows = cal.get("economicCalendar") or cal.get("economic_calendar") or []
     else:
@@ -196,7 +200,8 @@ def collect_newsapi(http: CachedHTTP, pool: KeyPool, assets: list[str]) -> list[
 
 
 def collect_twelve_data(http: CachedHTTP, pool: KeyPool, assets: list[str]) -> list[ResearchItem]:
-    symbols = ["XAU/USD", "DXY", "SPX", "US10Y"]
+    # Free-tier quotes. DXY/SPX/US10Y are plan-gated; FRED covers those macros.
+    symbols = ["XAU/USD", "SPY", "EUR/USD"]
     items = []
     for symbol in symbols:
         try:
@@ -312,8 +317,20 @@ def collect_bitget(http: CachedHTTP, assets: list[str]) -> list[ResearchItem]:
     items = []
     for symbol in ("BTCUSDT", "ETHUSDT"):
         try:
-            data = http.get_json(
-                "https://api.bitget.com/api/v2/mix/market/current-fund",
+            fund = http.get_json(
+                "https://api.bitget.com/api/v2/mix/market/history-fund-rate",
+                provider="bitget",
+                params={"symbol": symbol, "productType": "USDT-FUTURES", "pageSize": "1"},
+                ttl=300,
+            )
+            ticker = http.get_json(
+                "https://api.bitget.com/api/v2/mix/market/ticker",
+                provider="bitget",
+                params={"symbol": symbol, "productType": "USDT-FUTURES"},
+                ttl=300,
+            )
+            oi = http.get_json(
+                "https://api.bitget.com/api/v2/mix/market/open-interest",
                 provider="bitget",
                 params={"symbol": symbol, "productType": "USDT-FUTURES"},
                 ttl=300,
@@ -321,26 +338,37 @@ def collect_bitget(http: CachedHTTP, assets: list[str]) -> list[ResearchItem]:
         except Exception as exc:
             log.warning("bitget skip symbol=%s err=%s", symbol, type(exc).__name__)
             continue
-        inner = (data or {}).get("data") or {}
-        if isinstance(inner, list):
-            inner = inner[0] if inner else {}
-        rate = inner.get("fundingRate") or inner.get("fundingRateStr")
+        fund_row = _first(fund)
+        tick_row = _first(ticker)
+        oi_row = _first(oi)
+        if isinstance(oi_row, dict) and oi_row.get("openInterestList"):
+            oi_row = _first({"data": oi_row.get("openInterestList")})
+        rate = fund_row.get("fundingRate")
+        mark = tick_row.get("lastPr") or tick_row.get("markPrice")
+        open_int = oi_row.get("size") or oi_row.get("openInterest")
         items.append(
             ResearchItem(
                 source="bitget",
-                url="https://api.bitget.com/api/v2/mix/market/current-fund",
+                url="https://api.bitget.com/api/v2/mix/market/history-fund-rate",
                 published_at=utcnow(),
                 fetched_at=utcnow(),
                 asset_tags=[symbol.replace("USDT", "")],
                 title=f"{symbol} funding {rate}",
-                summary=f"bitget {symbol} funding={rate} mark={inner.get('markPrice')}",
+                summary=f"bitget {symbol} funding={rate} last={mark} oi={open_int}",
                 sentiment=0.0,
                 reliability=RELIABILITY["bitget"],
                 kind="derivatives",
-                extra={"funding": rate, "symbol": symbol},
+                extra={"funding": rate, "symbol": symbol, "oi": open_int, "last": mark},
             )
         )
     return items
+
+
+def _first(payload) -> dict:
+    inner = (payload or {}).get("data") if isinstance(payload, dict) else payload
+    if isinstance(inner, list):
+        return inner[0] if inner and isinstance(inner[0], dict) else {}
+    return inner if isinstance(inner, dict) else {}
 
 
 def _parse_iso(value) -> datetime | None:

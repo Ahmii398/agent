@@ -176,7 +176,7 @@ def _parse_rss(
 
     items = []
     try:
-        root = ET.fromstring(xml_text)
+        root = ET.fromstring(_strip_bom(xml_text))
     except ET.ParseError:
         return items
     for node in root.findall(".//item")[:15]:
@@ -203,6 +203,14 @@ def _parse_rss(
             )
         )
     return items
+
+
+def _strip_bom(text: str) -> str:
+    if text.startswith("\ufeff"):
+        return text[1:]
+    if text.startswith("ï»¿"):
+        return text[3:]
+    return text
 
 
 def _parse_date(value: str | None) -> datetime | None:
