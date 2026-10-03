@@ -21,7 +21,9 @@ _DEFAULT_EXCHANGE = "binance"
 class CcxtOHLCVProvider(DataProvider):
     """Historical OHLCV via ccxt REST. Streaming is implemented by polling."""
 
-    def __init__(self, exchange_id: str = _DEFAULT_EXCHANGE, exchange: object | None = None) -> None:
+    def __init__(
+        self, exchange_id: str = _DEFAULT_EXCHANGE, exchange: object | None = None
+    ) -> None:
         self.exchange_id = exchange_id
         self.name = exchange_id
         if exchange is not None:
@@ -56,7 +58,7 @@ class CcxtOHLCVProvider(DataProvider):
             if last_ts <= since:
                 break
             since = last_ts + 1
-            if len(batch) < 50:
+            if since >= end_ms:
                 break
             log.info(
                 "provider=%s symbol=%s tf=%s fetched_batch=%s last_open_ms=%s",

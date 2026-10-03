@@ -24,6 +24,7 @@ def poll_closed_candles(
     sleep: Callable[[float], None] = time.sleep,
     now: Callable[[], datetime] = utcnow,
     max_yields: int | None = None,
+    max_polls: int | None = None,
 ) -> Iterator[OHLCVBar]:
     """Poll ``fetch_ohlcv`` and yield newly closed candles.
 
@@ -32,6 +33,7 @@ def poll_closed_candles(
     """
     seen: set[datetime] = set()
     yielded = 0
+    polls = 0
     delta = timeframe_delta(timeframe)
     while True:
         as_of = now()
@@ -63,4 +65,7 @@ def poll_closed_candles(
             yielded += 1
             if max_yields is not None and yielded >= max_yields:
                 return
+        polls += 1
+        if max_polls is not None and polls >= max_polls:
+            return
         sleep(poll_seconds)

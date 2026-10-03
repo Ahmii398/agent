@@ -60,22 +60,16 @@ def test_streamer_drops_unclosed_even_if_provider_leaks() -> None:
     clock = _Clock(t0 + timedelta(minutes=10))  # first bar still open
     provider = _PollProvider()
     provider.bars = [OHLCVBar(ts=t0, open=1, high=2, low=0.5, close=1.2, volume=1)]
-
-    def fake_sleep(s: float) -> None:
-        raise StopIteration
-
-    got = []
-    try:
-        for bar in poll_closed_candles(
+    got = list(
+        poll_closed_candles(
             provider,
             "BTC/USDT",
             "1h",
-            poll_seconds=0.01,
-            sleep=fake_sleep,
+            poll_seconds=0.0,
+            sleep=lambda _s: None,
             now=clock,
             max_yields=1,
-        ):
-            got.append(bar)
-    except StopIteration:
-        pass
+            max_polls=2,
+        )
+    )
     assert got == []

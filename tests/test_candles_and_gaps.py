@@ -4,12 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 
-from trade_agent.data.candles import (
-    drop_unclosed,
-    empty_frame,
-    merge_frames,
-    normalize_frame,
-)
+from trade_agent.data.candles import empty_frame, merge_frames, normalize_frame
 from trade_agent.data.gaps import detect_gaps, quality_report
 
 
