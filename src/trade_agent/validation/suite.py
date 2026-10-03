@@ -14,6 +14,7 @@ from trade_agent.backtest.engine import run_backtest
 from trade_agent.backtest.metrics import Metrics
 from trade_agent.core.timeutil import utcnow_iso
 from trade_agent.db.store import Store
+from trade_agent.risk.limits import HARD_LIMITS
 from trade_agent.strategies.schema import StrategySpec
 
 
@@ -127,7 +128,9 @@ def validate_strategy(
             "no OOS window",
         )
 
-    wf_ok = bool(wf_metrics) and all(m.profit_factor >= 1.0 and m.trade_count > 0 for m in wf_metrics)
+    wf_ok = bool(wf_metrics) and all(
+        m.profit_factor >= 1.0 and m.trade_count > 0 for m in wf_metrics
+    )
     gate(
         "walk_forward_all_windows_pf_ge_1",
         wf_ok,
@@ -211,14 +214,18 @@ def _monte_carlo(trades, paths: int, q: float, rng: np.random.Generator) -> dict
     if not trades:
         return {"q": 1.0, "paths": 0}
     rs = np.array([t.r_multiple for t in trades], dtype=float)
+    risk_frac = float(HARD_LIMITS["max_risk_per_trade"])
     dds = []
     for _ in range(paths):
-        shuffled = rng.permutation(rs)
-        eq = np.cumsum(shuffled)
-        peak = np.maximum.accumulate(eq)
-        # R-space drawdown from a 0 start; convert to a positive fraction vs peak+eps
-        dd = float(((peak - eq).max()) / (abs(peak).max() + 1e-9)) if len(eq) else 0.0
-        dds.append(dd)
+        eq = 1.0
+        peak = 1.0
+        max_dd = 0.0
+        for r in rng.permutation(rs):
+            eq *= 1.0 + risk_frac * float(r)
+            peak = max(peak, eq)
+            if peak > 0:
+                max_dd = max(max_dd, (peak - eq) / peak)
+        dds.append(max_dd)
     return {"q": float(np.quantile(dds, q)), "paths": float(paths)}
 
 
@@ -242,7 +249,9 @@ def _sensitivity(ohlcv, features, spec: StrategySpec, cfg: dict[str, Any]) -> di
     return {"stable": stable, "positive": positive, "grid": grid}
 
 
-def _record_experiment(store: Store, spec: StrategySpec, ohlcv, seed: int, report: ValidationReport):
+def _record_experiment(
+    store: Store, spec: StrategySpec, ohlcv, seed: int, report: ValidationReport
+):
     store.execute("UPDATE experiment_counter SET total_tested = total_tested + 1 WHERE id = 1")
     row = store.fetchone("SELECT total_tested FROM experiment_counter WHERE id=1")
     total = int(row["total_tested"])
