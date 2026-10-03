@@ -18,6 +18,7 @@ REQUIRED_TABLES = {
     "calibration_outcomes",
     "risk_audit",
     "live_approvals",
+    "ohlcv_coverage",
 }
 
 

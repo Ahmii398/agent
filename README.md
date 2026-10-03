@@ -19,13 +19,15 @@ uv sync --extra dev
 uv run python -m trade_agent init-db
 uv run python -m trade_agent status
 uv run python -m trade_agent verify
+uv run python -m trade_agent verify-data --days 60 --timeframe 1h
+uv run python -m trade_agent inspect --symbol BTC/USDT --timeframe 1h
 uv run pytest
 uv run ruff check src tests
 ```
 
-Phase 1 and Phase 2 use **no API keys**. Binance public data via ccxt comes in
-Phase 2. If a later phase needs a key the agent stops and names the exact
-`.env` variable.
+Phase 1 and Phase 2 use **no API keys**. Phase 2 pulls Binance public spot
+candles via ccxt. If a later phase needs a key the agent stops and names the
+exact `.env` variable.
 
 ## Layout
 

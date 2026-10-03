@@ -194,6 +194,17 @@ CREATE TABLE IF NOT EXISTS risk_audit (
 );
 
 -- Explicit human approval records for paper → live. Empty by default.
+CREATE TABLE IF NOT EXISTS ohlcv_coverage (
+    exchange TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    timeframe TEXT NOT NULL,
+    start_ts TEXT NOT NULL,
+    end_ts TEXT NOT NULL,
+    row_count INTEGER NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (exchange, symbol, timeframe)
+);
+
 CREATE TABLE IF NOT EXISTS live_approvals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,

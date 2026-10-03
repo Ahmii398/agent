@@ -9,7 +9,7 @@ from typing import Any
 
 from trade_agent.core.timeutil import utcnow_iso
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
 

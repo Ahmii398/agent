@@ -27,6 +27,30 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("init-db", help="Create/migrate the SQLite database")
     sub.add_parser("status", help="Print config, tables, budget, live-flag")
     sub.add_parser("verify", help="Phase 1 end-to-end smoke against local DB")
+
+    dl = sub.add_parser("download", help="Download Binance OHLCV into Parquet")
+    dl.add_argument("--symbol", action="append", default=None)
+    dl.add_argument("--timeframe", default="1h")
+    dl.add_argument("--days", type=int, default=60)
+    dl.add_argument("--start", default=None)
+    dl.add_argument("--end", default=None)
+
+    ins = sub.add_parser("inspect", help="Print stored candle quality")
+    ins.add_argument("--symbol", default="BTC/USDT")
+    ins.add_argument("--timeframe", default="1h")
+    ins.add_argument("--sample", type=int, default=3)
+
+    st = sub.add_parser("stream", help="Poll for newly closed candles")
+    st.add_argument("--symbol", default="BTC/USDT")
+    st.add_argument("--timeframe", default="1m")
+    st.add_argument("--max", type=int, default=1)
+    st.add_argument("--poll", type=float, default=2.0)
+
+    vd = sub.add_parser("verify-data", help="Phase 2: real Binance download + quality")
+    vd.add_argument("--symbol", action="append", default=None)
+    vd.add_argument("--timeframe", default="1h")
+    vd.add_argument("--days", type=int, default=60)
+
     args = parser.parse_args(argv)
 
     settings = load_settings(args.config)
@@ -38,6 +62,22 @@ def main(argv: list[str] | None = None) -> int:
         return _status(settings)
     if args.cmd == "verify":
         return _verify(settings)
+    if args.cmd == "download":
+        from trade_agent.data.cli import cmd_download
+
+        return cmd_download(settings, args)
+    if args.cmd == "inspect":
+        from trade_agent.data.cli import cmd_inspect
+
+        return cmd_inspect(settings, args)
+    if args.cmd == "stream":
+        from trade_agent.data.cli import cmd_stream
+
+        return cmd_stream(settings, args)
+    if args.cmd == "verify-data":
+        from trade_agent.data.cli import cmd_verify_data
+
+        return cmd_verify_data(settings, args)
     return 1
 
 
