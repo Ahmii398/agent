@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-
 import pytest
 
 from trade_agent.core.logging import configure_logging
@@ -12,7 +10,6 @@ from trade_agent.core.security import (
     assert_json_schema,
     wrap_untrusted,
 )
-
 
 MALICIOUS_PAGE = """
 <html><body>
@@ -46,10 +43,12 @@ def test_json_schema_enforced() -> None:
         assert_json_schema({"summary": "x"}, WEB_EXTRACT_REQUIRED_KEYS)
 
 
-def test_logger_redacts_key_shaped_text(caplog) -> None:
+def test_logger_redacts_key_shaped_text(capsys) -> None:
     log = configure_logging("INFO")
-    caplog.set_level(logging.INFO)
     log.info("connecting api_key=sk-super-secret token=abcd")
-    text = " ".join(r.getMessage() for r in caplog.records)
+    log.info("cooldown_s=%.1f spent=%.6f", 1.5, 0.000001)
+    text = capsys.readouterr().out
     assert "sk-super-secret" not in text
     assert "***" in text
+    assert "cooldown_s=1.5" in text
+    assert "spent=0.000001" in text

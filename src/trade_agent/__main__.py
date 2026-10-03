@@ -99,7 +99,10 @@ def _verify(settings) -> int:
         )
         first = pool.acquire()
         second = pool.acquire()
-        print(f"keypool size={pool.size} first_index={first.key_index} second_index={second.key_index}")
+        print(
+            f"keypool size={pool.size} first_index={first.key_index} "
+            f"second_index={second.key_index}"
+        )
         pool.report(first.key_index, 429)
         third = pool.acquire()
         print(f"after_429_on_{first.key_index} next_index={third.key_index}")
@@ -137,7 +140,11 @@ def _verify(settings) -> int:
                 provider="dummy",
                 model="dummy-0",
                 task="bulk",
-                usage=LLMUsage(prompt_tokens=1, completion_tokens=1, cost_usd=budget.remaining_usd()),
+                usage=LLMUsage(
+                    prompt_tokens=1,
+                    completion_tokens=1,
+                    cost_usd=budget.remaining_usd(),
+                ),
             )
         blocked = False
         try:

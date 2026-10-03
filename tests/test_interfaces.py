@@ -29,7 +29,9 @@ class _StubProvider(DataProvider):
 
 def test_data_provider_contract() -> None:
     p = _StubProvider()
-    bars = p.fetch_ohlcv("BTC/USDT", "1h", datetime(2024, 1, 1, tzinfo=UTC), datetime(2024, 1, 2, tzinfo=UTC))
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    end = datetime(2024, 1, 2, tzinfo=UTC)
+    bars = p.fetch_ohlcv("BTC/USDT", "1h", start, end)
     assert bars[0].ts.tzinfo is not None
     with pytest.raises(NotImplementedError):
         next(p.stream_ohlcv("BTC/USDT", "1h"))

@@ -103,7 +103,8 @@ class LLMBudget:
             (usage.cost_usd, self.month),
         )
         log.info(
-            "llm usage provider=%s model=%s task=%s prompt=%s completion=%s cost=%.6f remaining=%.6f",
+            "llm usage provider=%s model=%s task=%s prompt=%s completion=%s "
+            "cost=%.6f remaining=%.6f",
             provider,
             model,
             task,

@@ -44,7 +44,9 @@ class BudgetedLLM(LLMClient):
             )
         # Refuse before the network call. Token estimate is conservative (chars/4).
         est_prompt = sum(len(m.get("content", "")) for m in request.messages) // 4
-        est_cost = self.budget.estimate_cost(self.provider, self.model, est_prompt, request.max_tokens)
+        est_cost = self.budget.estimate_cost(
+            self.provider, self.model, est_prompt, request.max_tokens
+        )
         self.budget.assert_can_spend(est_cost)
 
         response = self.inner.generate(request)

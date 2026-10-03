@@ -14,13 +14,17 @@ _SECRET_RE = re.compile(
 
 class _RedactFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = _redact(str(record.msg))
+        record.msg = _redact(record.msg) if isinstance(record.msg, str) else record.msg
         if record.args:
             if isinstance(record.args, dict):
-                record.args = {k: _redact(str(v)) for k, v in record.args.items()}
+                record.args = {k: _redact_arg(v) for k, v in record.args.items()}
             else:
-                record.args = tuple(_redact(str(a)) for a in record.args)
+                record.args = tuple(_redact_arg(a) for a in record.args)
         return True
+
+
+def _redact_arg(value: object) -> object:
+    return _redact(value) if isinstance(value, str) else value
 
 
 def _redact(text: str) -> str:

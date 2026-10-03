@@ -1,6 +1,5 @@
 from trade_agent.db.store import SCHEMA_VERSION
 
-
 REQUIRED_TABLES = {
     "schema_migrations",
     "http_cache",
@@ -26,7 +25,8 @@ def test_migrate_creates_all_tables(store) -> None:
     names = set(store.table_names())
     missing = REQUIRED_TABLES - names
     assert not missing, f"missing tables: {missing}"
-    assert store.fetchone("SELECT total_tested FROM experiment_counter WHERE id=1")["total_tested"] == 0
+    row = store.fetchone("SELECT total_tested FROM experiment_counter WHERE id=1")
+    assert row["total_tested"] == 0
 
 
 def test_migrate_is_idempotent(store) -> None:

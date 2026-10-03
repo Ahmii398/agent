@@ -26,8 +26,8 @@ def test_yaml_cannot_enable_live_trading(tmp_path: Path) -> None:
     assert settings.live_trading.enabled is True
     assert LIVE_TRADING_ENABLED is False
     # The live path consults the source constant, not YAML:
-    from trade_agent.interfaces.broker import Broker, Order, Side
     from trade_agent.core.errors import LiveTradingDisabled
+    from trade_agent.interfaces.broker import Broker, Order, Side
 
     class FakeLive(Broker):
         name = "fake-live"
