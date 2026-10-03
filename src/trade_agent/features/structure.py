@@ -40,10 +40,10 @@ def market_structure(df: pd.DataFrame, left: int = 2) -> pd.DataFrame:
     choch_down = (close < last["last_swing_low"]) & (bias.shift(1) == 1)
 
     # Fire only on the first bar of a cross (edge), not every bar above.
-    bos_up = bos_up & ~bos_up.shift(1).fillna(False)
-    bos_down = bos_down & ~bos_down.shift(1).fillna(False)
-    choch_up = choch_up & ~choch_up.shift(1).fillna(False)
-    choch_down = choch_down & ~choch_down.shift(1).fillna(False)
+    bos_up = bos_up & bos_up.shift(1).ne(True)
+    bos_down = bos_down & bos_down.shift(1).ne(True)
+    choch_up = choch_up & choch_up.shift(1).ne(True)
+    choch_down = choch_down & choch_down.shift(1).ne(True)
 
     out = swings.copy()
     out["last_swing_high"] = last["last_swing_high"]

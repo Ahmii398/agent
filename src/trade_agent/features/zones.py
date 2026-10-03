@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 
 
-def sr_zones(df: pd.DataFrame, swings: pd.DataFrame, atr: pd.Series, width_atr: float = 0.25) -> pd.DataFrame:
+def sr_zones(
+    df: pd.DataFrame, swings: pd.DataFrame, atr: pd.Series, width_atr: float = 0.25
+) -> pd.DataFrame:
     """Nearest resistance (above) and support (below) from swings known at ``t``.
 
     Zone half-width is ``width_atr * ATR[t]``. Distance is in price, not future.
