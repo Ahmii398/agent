@@ -7,7 +7,6 @@ import pandas as pd
 from trade_agent.core.errors import SchemaError
 from trade_agent.strategies.schema import Compare, ConditionGroup, StrategySpec
 
-
 _OPS = {
     "eq": lambda a, b: a == b,
     "ne": lambda a, b: a != b,

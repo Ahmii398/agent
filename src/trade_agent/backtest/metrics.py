@@ -24,7 +24,9 @@ class Metrics:
     avg_duration_bars: float
 
 
-def compute_metrics(trades: list[Trade], equity_curve: list[float], initial_equity: float) -> Metrics:
+def compute_metrics(
+    trades: list[Trade], equity_curve: list[float], initial_equity: float
+) -> Metrics:
     """Compute the Phase-4 metric set. Empty trade lists return zeros."""
     if not trades:
         return Metrics(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)

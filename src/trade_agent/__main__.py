@@ -46,6 +46,11 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument("--max", type=int, default=1)
     st.add_argument("--poll", type=float, default=2.0)
 
+    val = sub.add_parser("validate", help="Run the Phase 5 promotion gates")
+    val.add_argument("--spec", default="config/strategies/london_sweep_long.yaml")
+    val.add_argument("--symbol", action="append", default=None)
+    val.add_argument("--htf", default="1d")
+
     bt = sub.add_parser("backtest", help="Run a YAML strategy spec on stored candles")
     bt.add_argument("--spec", default="config/strategies/london_sweep_long.yaml")
     bt.add_argument("--symbol", default="BTC/USDT")
@@ -100,6 +105,12 @@ def main(argv: list[str] | None = None) -> int:
         from trade_agent.backtest.cli import cmd_backtest
 
         return cmd_backtest(settings, args)
+    if args.cmd == "validate":
+        from trade_agent.validation.cli import cmd_validate
+
+        if args.symbol is None:
+            args.symbol = ["BTC/USDT", "ETH/USDT"]
+        return cmd_validate(settings, args)
     return 1
 
 

@@ -71,6 +71,24 @@ risk_display:
   max_open_positions: 3
   news_blackout_minutes: 30
 
+validation:
+  min_trades: 100
+  min_profit_factor: 1.3
+  min_expectancy_r: 0.20
+  max_drawdown: 0.20
+  min_sharpe: 0.50
+  min_win_rate: 0.40
+  min_oos_profit_factor: 1.10
+  monte_carlo_paths: 400
+  monte_carlo_dd_quantile: 0.95
+  walk_forward:
+    train_bars: 700
+    test_bars: 200
+    step_bars: 200
+  sensitivity:
+    r_values: [1.5, 2.0, 2.5]
+    time_stops: [12, 24, 48]
+
 # Live money path is compile-time disabled until Phase 9 + explicit approval.
 live_trading:
   enabled: false

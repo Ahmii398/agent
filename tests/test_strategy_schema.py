@@ -3,12 +3,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from trade_agent.core.paths import project_root
+from trade_agent.core.config import project_root
 from trade_agent.strategies.engine import evaluate_row
 from trade_agent.strategies.schema import load_spec, spec_from_dict
-
-# project_root lives on Settings helper
-from trade_agent.core.config import project_root
 
 
 def test_bundled_spec_loads() -> None:

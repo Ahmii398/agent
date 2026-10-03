@@ -82,6 +82,7 @@ class Settings(BaseModel):
     providers: dict[str, ProviderConfig] = Field(default_factory=dict)
     live_trading: LiveTradingConfig = Field(default_factory=LiveTradingConfig)
     risk_display: dict[str, Any] = Field(default_factory=dict)
+    validation: dict[str, Any] = Field(default_factory=dict)
     config_path: Path | None = None
 
     @property
