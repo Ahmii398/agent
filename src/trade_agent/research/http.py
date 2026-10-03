@@ -158,7 +158,8 @@ def redact_url(url: str) -> str:
             kept.append((k, "***"))
         else:
             kept.append((k, v))
-    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(kept), parts.fragment))
+    query = urlencode(kept, safe="*")
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
 
 
 def polite_sleep(seconds: float) -> None:
